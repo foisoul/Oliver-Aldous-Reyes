@@ -1,0 +1,404 @@
+<!doctype html>
+<html lang="en">
+ <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>IT Intern Portfolio · 3D showcase</title>
+  <script src="https://cdn.tailwindcss.com/3.4.17"></script>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { 
+      font-family: 'DM Sans', sans-serif; 
+      background: #071029; 
+      color: #94a3b8; 
+      line-height: 1.6; 
+      overflow-x: hidden;
+    }
+    /* 3D canvas background */
+    #three-canvas {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .content-layer {
+      position: relative;
+      z-index: 10;
+      background: transparent;
+    }
+    .site-nav { 
+      position: fixed; 
+      top: 0; width: 100%; z-index: 50; 
+      backdrop-filter: blur(8px);
+      background: rgba(7,16,41,0.5);
+      border-bottom: 1px solid rgba(255,255,255,0.03);
+    }
+    .nav-inner { max-width: 72rem; margin: 0 auto; padding: 1rem 1.5rem; display: flex; justify-content: space-between; align-items: center; }
+    .nav-links { display: none; gap: 1.5rem; font-size: 0.875rem; }
+    .nav-links a { transition: color 0.2s; }
+    .nav-links a:hover { color: #10b981; }
+    @media(min-width:768px){ .nav-links { display: flex; } }
+
+    .reveal { opacity: 0; transform: translateY(28px); transition: opacity 0.7s cubic-bezier(0.2, 0.9, 0.3, 1), transform 0.7s cubic-bezier(0.2, 0.9, 0.3, 1); }
+    .reveal.visible { opacity: 1; transform: translateY(0); }
+
+    .hero { 
+      min-height: 100vh; 
+      display: flex; 
+      align-items: center; 
+      justify-content: center; 
+      text-align: center; 
+      position: relative;
+      padding: 0 1.5rem;
+    }
+    .hero-content { position: relative; z-index: 10; }
+    .hero-greeting { text-transform: uppercase; letter-spacing: 0.28em; margin-bottom: 0.75rem; color: #94a3b8; }
+    .hero-tagline { max-width: 40rem; margin: 1.25rem auto 0; }
+
+    .glass-panel {
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,0.04);
+      border-radius: 1.25rem;
+      padding: 2rem 1.5rem;
+      transition: transform 0.25s ease, box-shadow 0.3s;
+    }
+    .glass-panel:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 20px 40px -12px rgba(0,0,0,0.6);
+    }
+
+    .about-section { max-width: 64rem; margin: 0 auto; padding: 6rem 1.5rem; display: grid; gap: 3rem; align-items: center; }
+    @media(min-width:768px){ .about-section { grid-template-columns: 2fr 3fr; } }
+    .about-img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 1.25rem; border: 1px solid rgba(255,255,255,0.04); }
+    .skill-tag { border: 1px solid rgba(255,255,255,0.06); border-radius: 9999px; padding: 0.25rem 1.2rem; font-size: 0.8rem; background: rgba(16,185,129,0.06); color: #cbd5e1; }
+
+    .projects-section { width: 100%; padding: 6rem 1.5rem; }
+    .projects-inner { max-width: 64rem; margin: 0 auto; }
+    .project-grid { display: grid; gap: 2.5rem; align-items: center; margin-top: 4rem; }
+    @media(min-width:768px){ .project-grid { grid-template-columns: 1fr 1fr; } }
+    .project-grid.reverse .browser-frame { order: 2; }
+    .project-grid.reverse .project-info { order: 1; }
+    .browser-frame { border-radius: 16px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,0.7); transition: transform 0.3s ease, box-shadow 0.3s; border: 1px solid rgba(255,255,255,0.03); }
+    .browser-frame:hover { transform: translateY(-8px) scale(1.01); box-shadow: 0 30px 60px rgba(0,0,0,0.8); }
+    .browser-bar { background: rgba(255,255,255,0.03); padding: 0.6rem 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .browser-dots span { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .browser-url { flex: 1; background: rgba(255,255,255,0.04); border-radius: 6px; height: 18px; }
+    .project-img { width: 100%; height: 14rem; object-fit: cover; background: #0f172a; }
+    .project-tech { margin-top: 1rem; font-size: 0.75rem; color: #94a3b8; letter-spacing: 0.02em; }
+
+    .certs-section { max-width: 64rem; margin: 0 auto; padding: 6rem 1.5rem; }
+    .certs-grid { display: grid; gap: 1.5rem; margin-top: 3rem; }
+    @media(min-width:768px){ .certs-grid { grid-template-columns: repeat(3, 1fr); } }
+    .cert-card { border-radius: 1rem; overflow: hidden; border: 1px solid rgba(255,255,255,0.03); background: rgba(15,23,42,0.4); backdrop-filter: blur(2px); transition: all 0.25s; }
+    .cert-card:hover { border-color: rgba(16,185,129,0.2); transform: scale(1.02); box-shadow: 0 12px 30px -8px rgba(0,0,0,0.5); }
+    .cert-img { width: 100%; height: 9rem; object-fit: cover; }
+    .cert-body { padding: 1.25rem; }
+
+    .site-footer { width: 100%; padding: 4rem 1.5rem; text-align: center; border-top: 1px solid rgba(255,255,255,0.02); }
+    .section-heading { text-align: center; margin-bottom: 2.5rem; font-weight: 600; letter-spacing: -0.01em; }
+    a { color: #10b981; text-decoration: none; transition: color 0.2s; }
+    a:hover { text-decoration: underline; color: #34d399; }
+
+    /* floating subtle glow */
+    .glow-text { text-shadow: 0 0 20px rgba(16,185,129,0.15); }
+  </style>
+ </head>
+ <body>
+  <!-- 3D canvas -->
+  <div id="three-canvas"></div>
+
+  <!-- content layer -->
+  <div class="content-layer">
+    <nav class="site-nav">
+      <div class="nav-inner">
+        <span class="font-medium text-white/80 tracking-wide">Oliver Aldous Reyes</span>
+        <div class="nav-links">
+          <a href="#about" class="text-white/60 hover:text-emerald-400">About</a>
+          <a href="#projects" class="text-white/60 hover:text-emerald-400">Projects</a>
+          <a href="#certs" class="text-white/60 hover:text-emerald-400">Certifications</a>
+          <a href="#contact" class="text-white/60 hover:text-emerald-400">Contact</a>
+        </div>
+      </div>
+    </nav>
+
+    <header class="hero reveal">
+      <div class="hero-content">
+        <p class="hero-greeting text-emerald-300/60">Hello, I'm</p>
+        <h1 class="text-5xl md:text-6xl font-bold text-white/90 glow-text">Oliver Aldous Reyes</h1>
+        <p class="text-xl text-white/50 mt-2">IT Intern · Systems & Web</p>
+        <p class="hero-tagline text-white/40 max-w-xl mx-auto">I build practical tools and simple web apps to automate tasks and streamline IT workflows.</p>
+      </div>
+    </header>
+
+    <main>
+      <section id="about" class="about-section reveal">
+        <div>
+          <img data-template-id="about-img" class="about-img" loading="lazy" src="assets/me.jpg" xmlns='http://www.w3.org/2000/svg' width='400' height='400' viewBox='0 0 400 400'%3E%3Crect width='400' height='400' fill='%231e293b'/%3E%3Ccircle cx='200' cy='160' r='60' fill='%233b82f6' opacity='0.4'/%3E%3Cpath d='M120 280 Q200 220 280 280 L280 340 L120 340 Z' fill='%233b82f6' opacity='0.3'/%3E%3C/svg%3E" alt="profile" />
+        </div>
+        <div class="glass-panel">
+          <h2 class="text-3xl font-semibold text-white/90 mb-4">About Me</h2>
+          <p class="text-white/60 leading-relaxed">I'm an IT intern focused on practical automation, systems administration, and lightweight web development. I enjoy turning manual workflows into reliable scripts and building small tools that save time for teams.</p>
+          <p class="text-white/50 mt-3">Pursuing a Bachelor's in Information Technology — University of Mindanao</p>
+          <div class="skills-wrap flex flex-wrap gap-2 mt-5">
+            <span class="skill-tag">Python</span>
+            <span class="skill-tag">ASP.NET Core</span>
+            <span class="skill-tag">PHP</span>
+            <span class="skill-tag">HTML/CSS</span>
+            <span class="skill-tag">Tailwind</span>
+            <span class="skill-tag">SQLite</span>
+            <span class="skill-tag">C#</span>
+            <span class="skill-tag">Networking</span>
+          </div>
+        </div>
+      </section>
+
+      <section id="projects" class="projects-section reveal">
+        <h2 class="section-heading text-4xl font-bold text-white/90">Projects</h2>
+        <div class="projects-inner">
+          <!-- Project 1 -->
+          <div class="project-grid reveal">
+            <div class="browser-frame">
+              <div class="browser-bar">
+                <div class="browser-dots"><span style="background:#f87171"></span><span style="background:#fbbf24"></span><span style="background:#34d399"></span></div>
+                <div class="browser-url"></div>
+              </div>
+              <img class="project-img" loading="lazy" src="assets/samal exp.jpg"xmlns='http://www.w3.org/2000/svg' width='600' height='300' viewBox='0 0 600 300'%3E%3Crect width='600' height='300' fill='%231e293b'/%3E%3Cpath d='M50 150 L200 80 L350 150 L200 220 Z' fill='%2310b981' opacity='0.3'/%3E%3Ccircle cx='200' cy='150' r='30' fill='%23fbbf24' opacity='0.5'/%3E%3C/svg%3E" alt="samal explorer" />
+            </div>
+            <div class="project-info">
+              <h3 class="text-2xl font-semibold text-white/90">Samal Explorer</h3>
+              <p class="text-white/60 leading-relaxed mt-2">Resort booking platform with collaborative filtering recommendations and immersive 360° virtual tours.</p>
+              <p class="project-tech text-emerald-300/70">ASP.NET Core · C# · SQL Server</p>
+            </div>
+          </div>
+          <!-- Project 2 reverse -->
+          <div class="project-grid reverse reveal">
+            <div class="browser-frame">
+              <div class="browser-bar">
+                <div class="browser-dots"><span style="background:#f87171"></span><span style="background:#fbbf24"></span><span style="background:#34d399"></span></div>
+                <div class="browser-url"></div>
+              </div>
+              <img class="project-img" loading="lazy" src="assets/barangay.png" xmlns='http://www.w3.org/2000/svg' width='600' height='300' viewBox='0 0 600 300'%3E%3Crect width='600' height='300' fill='%231e293b'/%3E%3Crect x='80' y='80' width='440' height='140' fill='%233b82f6' opacity='0.2' rx='10'/%3E%3Ccircle cx='150' cy='150' r='20' fill='%23f87171' opacity='0.6'/%3E%3C/svg%3E" alt="barangay system" />
+            </div>
+            <div class="project-info">
+              <h3 class="text-2xl font-semibold text-white/90">Barangay Citizen Compliance</h3>
+              <p class="text-white/60 leading-relaxed mt-2">A web-based system for managing citizen compliance and clearance requests in the barangay.</p>
+              <p class="project-tech text-emerald-300/70">ASP.NET Core · SQL Server · C#</p>
+            </div>
+          </div>
+          <!-- Project 3 -->
+          <div class="project-grid reveal">
+            <div class="browser-frame">
+              <div class="browser-bar">
+                <div class="browser-dots"><span style="background:#f87171"></span><span style="background:#fbbf24"></span><span style="background:#34d399"></span></div>
+                <div class="browser-url"></div>
+              </div>
+              <img class="project-img" loading="lazy" src="assets/gents.jpg" alt="barbershop" />
+            </div>
+            <div class="project-info">
+              <h3 class="text-2xl font-semibold text-white/90">Gent's Row Barbershop</h3>
+              <p class="text-white/60 leading-relaxed mt-2">Appointment scheduling, inventory management, sales reports, and customer management.</p>
+              <p class="project-tech text-emerald-300/70">Laravel · PHP · MySQL · Tailwind CSS</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="certs" class="certs-section reveal">
+        <h2 class="section-heading text-4xl font-bold text-white/90">Certifications</h2>
+        <div class="certs-grid">
+          <div class="cert-card"><img class="cert-img" loading="lazy" src="assets/cyber.png" xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'%3E%3Crect width='400' height='200' fill='%231e293b'/%3E%3Ccircle cx='200' cy='100' r='50' fill='%2310b981' opacity='0.2'/%3E%3C/svg%3E" alt="cyber" /><div class="cert-body"><h3 class="text-white/90 font-medium">ITS Cybersecurity</h3><p class="text-white/40 text-sm">Certiport</p><p class="text-emerald-300/60 text-xs mt-1">2025</p></div></div>
+          <div class="cert-card"><img class="cert-img" loading="lazy" src="assets/database.png" xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'%3E%3Crect width='400' height='200' fill='%231e293b'/%3E%3Crect x='120' y='60' width='160' height='80' fill='%233b82f6' opacity='0.2' rx='8'/%3E%3C/svg%3E" alt="db" /><div class="cert-body"><h3 class="text-white/90 font-medium">ITS Databases</h3><p class="text-white/40 text-sm">Certiport</p><p class="text-emerald-300/60 text-xs mt-1">2024</p></div></div>
+          <div class="cert-card"><img class="cert-img" loading="lazy" src="assets/htmlCss.png" xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'%3E%3Crect width='400' height='200' fill='%231e293b'/%3E%3Ctext x='120' y='120' fill='%2394a3b8' opacity='0.5' font-size='32'%3E&lt;/&gt;%3C/text%3E%3C/svg%3E" alt="htmlcss" /><div class="cert-body"><h3 class="text-white/90 font-medium">ITS HTML & CSS</h3><p class="text-white/40 text-sm">Certiport</p><p class="text-emerald-300/60 text-xs mt-1">2024</p></div></div>
+          <div class="cert-card"><img class="cert-img" loading="lazy" src="assets/java.png" xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'%3E%3Crect width='400' height='200' fill='%231e293b'/%3E%3Ccircle cx='200' cy='100' r='40' fill='%23f87171' opacity='0.2'/%3E%3C/svg%3E" alt="java" /><div class="cert-body"><h3 class="text-white/90 font-medium">ITS Java</h3><p class="text-white/40 text-sm">Certiport</p><p class="text-emerald-300/60 text-xs mt-1">2022</p></div></div>
+          <div class="cert-card"><img class="cert-img" loading="lazy" src="assets/network.png" xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'%3E%3Crect width='400' height='200' fill='%231e293b'/%3E%3Ccircle cx='200' cy='100' r='40' fill='%23f87171' opacity='0.2'/%3E%3C/svg%3E" alt="java" /><div class="cert-body"><h3 class="text-white/90 font-medium">ITS Network Security</h3><p class="text-white/40 text-sm">Certiport</p><p class="text-emerald-300/60 text-xs mt-1">2025</p></div></div>
+          <div class="cert-card"><img class="cert-img" loading="lazy" src="assets/networking.png" xmlns='http://www.w3.org/2000/svg' width='400' height='200' viewBox='0 0 400 200'%3E%3Crect width='400' height='200' fill='%231e293b'/%3E%3Ccircle cx='200' cy='100' r='40' fill='%23f87171' opacity='0.2'/%3E%3C/svg%3E" alt="java" /><div class="cert-body"><h3 class="text-white/90 font-medium">ITS Networking</h3><p class="text-white/40 text-sm">Certiport</p><p class="text-emerald-300/60 text-xs mt-1">2024</p></div></div>
+      </section>
+
+      <footer id="contact" class="site-footer reveal">
+        <h2 class="text-3xl font-semibold text-white/90 mb-3">Get in touch</h2>
+        <p class="text-white/50 max-w-md mx-auto">I'm open to internship opportunities and collaboration — feel free to reach out.</p>
+        <p class="mt-4"><a href="mailto:oliverdelosreyes111@gmail.com" class="text-emerald-400 hover:text-emerald-300">oliverdelosreyes111@gmail.com</a></p>
+      </footer>
+    </main>
+  </div>
+
+  <!-- Three.js -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.126.0/build/three.module.js"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from 'three';
+    import { OrbitControls } from 'https://unpkg.com/three@0.126.0/examples/jsm/controls/OrbitControls.js';
+
+    const container = document.getElementById('three-canvas');
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x071029);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 2, 10);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    container.appendChild(renderer.domElement);
+
+    // lights
+    const ambient = new THREE.AmbientLight(0x404060);
+    scene.add(ambient);
+    const dirLight = new THREE.DirectionalLight(0x10b981, 0.8);
+    dirLight.position.set(1, 3, 5);
+    scene.add(dirLight);
+    const backLight = new THREE.PointLight(0x3b82f6, 0.6);
+    backLight.position.set(-2, 1, -4);
+    scene.add(backLight);
+
+    // floating particles (nebula)
+    const particlesGeo = new THREE.BufferGeometry();
+    const particleCount = 1800;
+    const pos = new Float32Array(particleCount * 3);
+    for (let i = 0; i < particleCount * 3; i += 3) {
+      const r = 8 + Math.random() * 12;
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      pos[i] = r * Math.sin(phi) * Math.cos(theta);
+      pos[i+1] = r * Math.sin(phi) * Math.sin(theta) * 0.5;
+      pos[i+2] = r * Math.cos(phi);
+    }
+    particlesGeo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const particlesMat = new THREE.PointsMaterial({
+      color: 0x10b981,
+      size: 0.08,
+      transparent: true,
+      opacity: 0.5,
+      blending: THREE.AdditiveBlending,
+    });
+    const particles = new THREE.Points(particlesGeo, particlesMat);
+    scene.add(particles);
+
+    // floating geometric shapes
+    const shapes = [];
+    const colors = [0x10b981, 0x3b82f6, 0xfbbf24, 0xf87171, 0xa78bfa];
+    for (let i = 0; i < 25; i++) {
+      const geometry = new THREE.BoxGeometry(0.15, 0.15, 0.15);
+      const material = new THREE.MeshStandardMaterial({
+        color: colors[Math.floor(Math.random() * colors.length)],
+        emissive: new THREE.Color(colors[Math.floor(Math.random() * colors.length)]).multiplyScalar(0.2),
+        roughness: 0.4,
+        metalness: 0.1,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const radius = 3 + Math.random() * 6;
+      mesh.position.set(
+        radius * Math.sin(phi) * Math.cos(theta),
+        radius * Math.sin(phi) * Math.sin(theta) * 0.6,
+        radius * Math.cos(phi)
+      );
+      mesh.userData = {
+        speed: 0.001 + Math.random() * 0.003,
+        axis: new THREE.Vector3(Math.random() - 0.5, Math.random() - 0.5, Math.random() - 0.5).normalize(),
+        rotSpeed: 0.005 + Math.random() * 0.01,
+        radius,
+        theta,
+        phi,
+      };
+      scene.add(mesh);
+      shapes.push(mesh);
+    }
+
+    // some rings
+    const ringGeo = new THREE.TorusGeometry(1.8, 0.02, 16, 100);
+    const ringMat = new THREE.MeshStandardMaterial({ color: 0x10b981, emissive: new THREE.Color(0x10b981).multiplyScalar(0.1), transparent: true, opacity: 0.15 });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = Math.PI / 2;
+    ring.position.y = -0.5;
+    scene.add(ring);
+
+    const ring2 = new THREE.Mesh(
+      new THREE.TorusGeometry(2.4, 0.015, 16, 100),
+      new THREE.MeshStandardMaterial({ color: 0x3b82f6, emissive: new THREE.Color(0x3b82f6).multiplyScalar(0.1), transparent: true, opacity: 0.12 })
+    );
+    ring2.rotation.x = Math.PI / 3;
+    ring2.rotation.z = 0.5;
+    ring2.position.y = 0.2;
+    scene.add(ring2);
+
+    // mouse tracking for subtle parallax
+    let mouseX = 0, mouseY = 0;
+    document.addEventListener('mousemove', (e) => {
+      mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+      mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+    });
+
+    // resize
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      // rotate particles
+      particles.rotation.y += 0.0004;
+      particles.rotation.x += 0.0001;
+
+      // rotate shapes
+      shapes.forEach((mesh, idx) => {
+        mesh.rotation.x += mesh.userData.rotSpeed * 0.5;
+        mesh.rotation.y += mesh.userData.rotSpeed;
+        // orbit
+        const data = mesh.userData;
+        data.theta += data.speed;
+        const r = data.radius;
+        mesh.position.x = r * Math.sin(data.phi) * Math.cos(data.theta);
+        mesh.position.y = r * Math.sin(data.phi) * Math.sin(data.theta) * 0.6;
+        mesh.position.z = r * Math.cos(data.phi);
+      });
+
+      // ring rotation
+      ring.rotation.z += 0.002;
+      ring2.rotation.y += 0.003;
+
+      // subtle camera parallax
+      camera.position.x += (mouseX * 0.5 - camera.position.x) * 0.02;
+      camera.position.y += (-mouseY * 0.4 - camera.position.y) * 0.02;
+      camera.lookAt(0, 0.5, 0);
+
+      renderer.render(scene, camera);
+    }
+    animate();
+  </script>
+
+  <!-- Intersection observer for reveals -->
+  <script>
+    (function() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.1, rootMargin: '0px 0px -20px 0px' });
+      document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+
+      document.querySelectorAll('a[href^="#"]').forEach(a => {
+        a.addEventListener('click', e => {
+          e.preventDefault();
+          document.querySelector(a.getAttribute('href'))?.scrollIntoView({ behavior: 'smooth' });
+        });
+      });
+    })();
+  </script>
+ </body>
+</html>
